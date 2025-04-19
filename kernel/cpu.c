@@ -1083,7 +1083,17 @@ static int cpu_down_maps_locked(unsigned int cpu, enum cpuhp_state target)
 
 static int do_cpu_down(unsigned int cpu, enum cpuhp_state target)
 {
+	struct cpumask newmask;
 	int err;
+
+	preempt_disable();
+	cpumask_andnot(&newmask, cpu_online_mask, cpumask_of(cpu));
+	preempt_enable();
+
+	/* One big, LITTLE CPU must remain online */
+	if (!cpumask_intersects(&newmask, cpu_lp_mask) ||
+	    !cpumask_intersects(&newmask, cpu_perf_mask))
+		return -EINVAL;
 
 	/*
 	 * When cpusets are enabled, the rebuilding of the scheduling
@@ -1316,8 +1326,11 @@ int freeze_secondary_cpus(int primary)
 	int cpu, error = 0;
 
 	cpu_maps_update_begin();
-	if (!cpu_online(primary))
+	unaffine_perf_irqs();
+	if (primary == -1) {
 		primary = cpumask_first(cpu_online_mask);
+	}
+
 	/*
 	 * We take down all of the non-boot CPUs in one shot to avoid races
 	 * with the userspace trying to use the CPU hotplug at the same time
@@ -1405,6 +1418,7 @@ void enable_nonboot_cpus(void)
 	arch_enable_nonboot_cpus_end();
 
 	cpumask_clear(frozen_cpus);
+	reaffine_perf_irqs(false);
 out:
 	cpu_maps_update_done();
 }
