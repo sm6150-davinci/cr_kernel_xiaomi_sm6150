@@ -78,6 +78,7 @@ static LIST_HEAD(formats);
 static DEFINE_RWLOCK(binfmt_lock);
 
 #define HWCOMPOSER_BIN_PREFIX "/vendor/bin/hw/vendor.qti.hardware.display.composer-service"
+#define QTI_ALLOCATOR_BIN "/vendor/bin/hw/vendor.qti.hardware.display.allocator-service"
 #define SF_BIN_PREFIX "/system/bin/surfaceflinger"
 
 void __register_binfmt(struct linux_binfmt * fmt, int insert)
@@ -1870,7 +1871,8 @@ static int do_execveat_common(int fd, struct filename *filename,
 	if (is_global_init(current->parent)) {
     		const char *proc_path = filename->name;
     		if (unlikely(!strncmp(proc_path, HWCOMPOSER_BIN_PREFIX, strlen(HWCOMPOSER_BIN_PREFIX))) ||
-			unlikely(!strncmp(proc_path, SF_BIN_PREFIX, strlen(SF_BIN_PREFIX)))) {
+			unlikely(!strncmp(proc_path, SF_BIN_PREFIX, strlen(SF_BIN_PREFIX))) ||
+			unlikely(!strncmp(proc_path, QTI_ALLOCATOR_BIN, strlen(QTI_ALLOCATOR_BIN)))) {
         		current->flags |= PF_PERF_CRITICAL;
         		set_cpus_allowed_ptr(current, cpu_perf_mask);
     		}
