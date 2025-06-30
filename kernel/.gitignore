@@ -1,5 +1,14 @@
 #
 # Generated files
+*.orig
+*.rej
+*.patch
+*.orig
+*.rej
+*.patch
+*.orig
+*.rej
+*.patch
 #
 config_data.h
 config_data.gz
