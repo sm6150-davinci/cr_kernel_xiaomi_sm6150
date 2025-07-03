@@ -5867,9 +5867,21 @@ static inline bool
 cpu_is_in_target_set(struct task_struct *p, int cpu)
 {
 	struct root_domain *rd = cpu_rq(cpu)->rd;
-	int first_cpu = (schedtune_task_boost(p)) ?
-		rd->mid_cap_orig_cpu : rd->min_cap_orig_cpu;
-	int next_usable_cpu = cpumask_next(first_cpu - 1, &p->cpus_allowed);
+	int first_cpu, next_usable_cpu;
+
+#ifdef CONFIG_SCHED_TUNE
+	if (schedtune_prefer_high_cap(p) && p->prio <= DEFAULT_PRIO) {
+#elif  CONFIG_UCLAMP_TASK
+	if (uclamp_boosted(p) && p->prio <= DEFAULT_PRIO) {
+#endif
+		first_cpu = rd->mid_cap_orig_cpu != -1 ? rd->mid_cap_orig_cpu :
+			    rd->max_cap_orig_cpu;
+
+	} else {
+		first_cpu = rd->min_cap_orig_cpu;
+	}
+
+	next_usable_cpu = cpumask_next(first_cpu - 1, &p->cpus_allowed);
 	return cpu >= next_usable_cpu || next_usable_cpu >= nr_cpu_ids;
 }
 
