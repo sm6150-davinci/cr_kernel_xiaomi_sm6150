@@ -7815,7 +7815,8 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 
 		next_group_higher_cap = (capacity_orig_of(group_first_cpu(sg)) <
 			capacity_orig_of(group_first_cpu(sg->next)));
-
+			
+#ifdef CONFIG_SCHED_WALT
 		/*
 		 * If we've found a cpu, but the boost is ON_ALL we continue
 		 * visiting other clusters. If the boost is ON_BIG we visit
@@ -7829,6 +7830,7 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 			(fbt_env->placement_boost == SCHED_BOOST_ON_BIG &&
 				!next_group_higher_cap)))
 			break;
+#endif
 
 		/*
 		 * if we are in prefer_idle and have found an idle cpu,
@@ -12902,6 +12904,7 @@ static void walt_fixup_nr_big_tasks(struct rq *rq, struct task_struct *p,
 		walt_adjust_nr_big_tasks(rq, delta, inc);
 }
 
+#ifdef CONFIG_SCHED_WALT
 /*
  * Check if task is part of a hierarchy where some cfs_rq does not have any
  * runtime left.
@@ -12928,6 +12931,7 @@ static int task_will_be_throttled(struct task_struct *p)
 
 	return 0;
 }
+#endif /* bye walt */
 
 #else /* CONFIG_CFS_BANDWIDTH */
 
@@ -12945,10 +12949,12 @@ static void walt_fixup_nr_big_tasks(struct rq *rq, struct task_struct *p,
 	walt_adjust_nr_big_tasks(rq, delta, inc);
 }
 
+#ifdef CONFIG_SCHED_WALT
 static int task_will_be_throttled(struct task_struct *p)
 {
 	return false;
 }
+#endif /* bye walt */
 
 #endif /* CONFIG_CFS_BANDWIDTH */
 
@@ -13019,6 +13025,7 @@ void walt_rotate_work_init(void)
 	}
 }
 
+#ifdef CONFIG_SCHED_WALT
 #define WALT_ROTATION_THRESHOLD_NS	16000000
 static void walt_check_for_rotation(struct rq *src_rq)
 {
@@ -13169,5 +13176,7 @@ void check_for_migration(struct rq *rq, struct task_struct *p)
 		raw_spin_unlock(&migration_lock);
 	}
 }
+
+#endif /* bye walt */
 
 #endif /* CONFIG_SCHED_WALT */
